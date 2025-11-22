@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Generative Design for Additive Manufacturing</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .subtitle {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .control-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .viewer-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            min-height: 600px;
+        }
+
+        .control-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #333;
+        }
+
+        select, input[type="number"] {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        select:focus, input[type="number"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 10px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #48bb78;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #38a169;
+            transform: translateY(-2px);
+        }
+
+        .btn:disabled {
+            background: #cbd5e0;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        #viewer {
+            width: 100%;
+            height: 600px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        }
+
+        .info-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .message {
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            display: none;
+        }
+
+        .message.active {
+            display: block;
+        }
+
+        .message.success {
+            background: #c6f6d5;
+            color: #22543d;
+            border-left: 4px solid #48bb78;
+        }
+
+        .message.error {
+            background: #fed7d7;
+            color: #742a2a;
+            border-left: 4px solid #f56565;
+        }
+
+        @media (max-width: 1024px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎨 3D Generative Design</h1>
+            <p class="subtitle">AI-Powered Shape Generation for Additive Manufacturing</p>
+        </header>
+
+        <div class="main-content">
+            <div class="control-panel">
+                <h2 style="margin-bottom: 20px; color: #333;">🤖 AI Design Prompt</h2>
+
+                <div class="message" id="message"></div>
+
+                <div class="control-group">
+                    <label for="prompt">Describe your design with constraints:</label>
+                    <textarea id="prompt" rows="6" placeholder="Example: Design an ergonomic chair that is 80cm tall, can support 100kg, has armrests, and is sturdy. Make it modern and lightweight."
+                        style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-family: inherit; font-size: 14px; resize: vertical;"></textarea>
+                    <div style="font-size: 0.85rem; color: #666; margin-top: 8px;">
+                        💡 Try: "modern table 60cm tall", "bottle that holds 500ml", "ergonomic chair with armrests support 80kg"
+                    </div>
+                </div>
+
+                <div class="control-group" style="margin-top: 20px;">
+                    <details>
+                        <summary style="cursor: pointer; font-weight: 600; margin-bottom: 10px;">Or use Quick Category</summary>
+                        <select id="category" style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px;">
+                            <option value="chair">Chair</option>
+                            <option value="table">Table</option>
+                            <option value="bottle">Bottle</option>
+                            <option value="mug">Mug</option>
+                            <option value="sofa">Sofa</option>
+                            <option value="bed">Bed</option>
+                            <option value="shelf">Shelf</option>
+                            <option value="stand">Stand/Holder</option>
+                        </select>
+                    </details>
+                </div>
+
+                <button class="btn btn-primary" id="generate-btn" onclick="generateShape()">
+                    🚀 Generate Shape
+                </button>
+
+                <div class="loading" id="loading">
+                    <div class="spinner"></div>
+                    <p>Generating 3D shape...</p>
+                </div>
+
+                <hr style="margin: 25px 0; border: none; border-top: 2px solid #e0e0e0;">
+
+                <h3 style="margin-bottom: 15px; color: #333;">Export Options</h3>
+
+                <button class="btn btn-secondary" id="export-obj-btn" onclick="exportShape('obj')" disabled>
+                    📦 Export as OBJ
+                </button>
+
+                <button class="btn btn-secondary" id="export-stl-btn" onclick="exportShape('stl')" disabled>
+                    🖨️ Export as STL (3D Print)
+                </button>
+
+                <hr style="margin: 25px 0; border: none; border-top: 2px solid #e0e0e0;">
+
+                <div style="background: #f7fafc; padding: 15px; border-radius: 8px;">
+                    <h4 style="margin-bottom: 10px; color: #333;">Model Info</h4>
+                    <p id="model-info" style="font-size: 0.9rem; color: #666; line-height: 1.6;">
+                        Loading model information...
+                    </p>
+                </div>
+            </div>
+
+            <div class="viewer-panel">
+                <h2 style="margin-bottom: 15px; color: #333;">3D Viewer</h2>
+                <div id="viewer"></div>
+            </div>
+        </div>
+
+        <div class="info-panel">
+            <h2 style="margin-bottom: 20px; color: #333;">Statistics</h2>
+            <div class="stats">
+                <div class="stat-card">
+                    <div class="stat-value" id="stat-vertices">0</div>
+                    <div class="stat-label">Vertices</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="stat-faces">0</div>
+                    <div class="stat-label">Faces</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="stat-complexity">0%</div>
+                    <div class="stat-label">Complexity</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="stat-printable">Yes</div>
+                    <div class="stat-label">3D Printable</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="/static/app.js?v=2"></script>
+</body>
+</html>
